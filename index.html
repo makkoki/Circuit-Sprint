@@ -13,7 +13,7 @@
         <p class="eyebrow">Selainpeli</p>
         <h1>Circuit Sprint</h1>
       </div>
-      <p class="instructions">Ohjaa: nuolinäppäimet tai WASD · Aja 3 kierrosta mahdollisimman nopeasti.</p>
+      <p class="instructions">Ohjaa: nuolinäppäimet, WASD tai kosketuspainikkeet · Aja 3 kierrosta mahdollisimman nopeasti.</p>
     </header>
 
     <section class="game-panel" aria-label="Circuit Sprint -peli">
@@ -43,6 +43,17 @@
         <button id="hudRestartButton" class="hud-restart" type="button">Restart</button>
         <div class="status" id="statusMessage">Paina Restart aloittaaksesi ajanoton.</div>
       </aside>
+
+      <div class="touch-controls" aria-label="Mobiiliohjaus">
+        <div class="touch-cluster touch-cluster-steering" aria-label="Ohjaus">
+          <button class="touch-button" type="button" data-touch-control="left" aria-label="Käännä vasemmalle">←</button>
+          <button class="touch-button" type="button" data-touch-control="right" aria-label="Käännä oikealle">→</button>
+        </div>
+        <div class="touch-cluster touch-cluster-pedals" aria-label="Kaasu ja jarru">
+          <button class="touch-button touch-button-primary" type="button" data-touch-control="accelerate" aria-label="Kaasu">Kaasu</button>
+          <button class="touch-button" type="button" data-touch-control="brake" aria-label="Jarru tai peruuta">Jarru</button>
+        </div>
+      </div>
 
       <div id="resultsOverlay" class="results-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="resultsTitle">
         <div class="results-card">
