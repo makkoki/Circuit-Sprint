@@ -14,6 +14,7 @@ const resultsOverlay = document.getElementById('resultsOverlay');
 const resultsList = document.getElementById('resultsList');
 const restartButton = document.getElementById('restartButton');
 const hudRestartButton = document.getElementById('hudRestartButton');
+const touchButtons = document.querySelectorAll('[data-touch-control]');
 
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
@@ -30,6 +31,12 @@ const track = {
 const startLine = { x1: track.centerX, y1: track.centerY + track.innerRadiusY, x2: track.centerX, y2: track.centerY + track.outerRadiusY };
 const checkpointLine = { x1: track.centerX, y1: track.centerY - track.outerRadiusY, x2: track.centerX, y2: track.centerY - track.innerRadiusY };
 const keys = new Set();
+const touchControls = {
+  accelerate: false,
+  brake: false,
+  left: false,
+  right: false,
+};
 
 let car;
 let timing;
@@ -71,6 +78,7 @@ function createInitialState(startRace = false) {
   raceFinished = false;
   lastFrameTime = now;
   keys.clear();
+  resetTouchControls();
   resultsOverlay.classList.add('hidden');
   hud.status.textContent = startRace
  ? 'Drive through the opposing side's checkpoint and cross the finish line from the right direction.' 
@@ -155,10 +163,10 @@ function formatTime(milliseconds) {
 
 Car physics: acceleration, braking/reversing, speed-proportional turning and friction. 
 function updateCar(deltaSeconds) {
-  const accelerating = isKeyDown('ArrowUp', 'KeyW');
-  const braking = isKeyDown('ArrowDown', 'KeyS');
-  const turningLeft = isKeyDown('ArrowLeft', 'KeyA');
-  const turningRight = isKeyDown('ArrowRight', 'KeyD');
+  const accelerating = isKeyDown('ArrowUp', 'KeyW') || touchControls.accelerate;
+  const braking = isKeyDown('ArrowDown', 'KeyS') || touchControls.brake;
+  const turningLeft = isKeyDown('ArrowLeft', 'KeyA') || touchControls.left;
+  const turningRight = isKeyDown('ArrowRight', 'KeyD') || touchControls.right;
   const onTrack = isCarOnTrack();
   const acceleration = onTrack ? 250 : 105;
   const brakeForce = onTrack ? 330 : 145;
@@ -419,12 +427,54 @@ window.addEventListener('keyup', (event) => {
   keys.delete(event.code);
 });
 
+
+function setTouchControl(control, isActive) {
+ if (!( control in touchControls)) { 
+    return;
+  }
+
+  touchControls[control] = isActive;
+  touchButtons.forEach((button) => {
+    if (button.dataset.touchControl === control) {
+      button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
+    }
+  });
+}
+
+function resetTouchControls() {
+  Object.keys(touchControls).forEach((control) => setTouchControl(control, false));
+}
+
+function handleTouchControlStart(event) {
+  event.preventDefault();
+  const control = event.currentTarget.dataset.touchControl;
+  setTouchControl(control, true);
+}
+
+function handleTouchControlEnd(event) {
+  event.preventDefault();
+  const control = event.currentTarget.dataset.touchControl;
+  setTouchControl(control, false);
+}
+
 function restartGame() {
   createInitialState(true);
 }
 
 restartButton.addEventListener('click', restartGame);
 hudRestartButton.addEventListener('click', restartGame);
+
+touchButtons.forEach((button) => {
+  button.setAttribute('aria-pressed', 'false');
+  button.addEventListener('pointerdown', handleTouchControlStart);
+  button.addEventListener('pointerup', handleTouchControlEnd);
+  button.addEventListener('pointercancel', handleTouchControlEnd);
+  button.addEventListener('pointerleave', handleTouchControlEnd);
+  button.addEventListener('contextmenu', (event) => event.preventDefault());
+});
+
+window.addEventListener('blur', resetTouchControls);
 
 createInitialState();
 requestAnimationFrame(gameLoop);
