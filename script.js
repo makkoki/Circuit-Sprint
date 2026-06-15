@@ -2,7 +2,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const hud = {
-  lap: document.getElementById('lapDisplay'),
+ sheet: document.getElementById('sheetDisplay'), 
   currentLap: document.getElementById('currentLapTime'),
   lastLap: document.getElementById('lastLapTime'),
   bestLap: document.getElementById('bestLapTime'),
@@ -14,7 +14,6 @@ const resultsOverlay = document.getElementById('resultsOverlay');
 const resultsList = document.getElementById('resultsList');
 const restartButton = document.getElementById('restartButton');
 const hudRestartButton = document.getElementById('hudRestartButton');
-const touchButtons = document.querySelectorAll('[data-touch-control]');
 
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
@@ -31,12 +30,6 @@ const track = {
 const startLine = { x1: track.centerX, y1: track.centerY + track.innerRadiusY, x2: track.centerX, y2: track.centerY + track.outerRadiusY };
 const checkpointLine = { x1: track.centerX, y1: track.centerY - track.outerRadiusY, x2: track.centerX, y2: track.centerY - track.innerRadiusY };
 const keys = new Set();
-const touchControls = {
-  accelerate: false,
-  brake: false,
-  left: false,
-  right: false,
-};
 
 let car;
 let timing;
@@ -78,18 +71,17 @@ function createInitialState(startRace = false) {
   raceFinished = false;
   lastFrameTime = now;
   keys.clear();
-  resetTouchControls();
   resultsOverlay.classList.add('hidden');
   hud.status.textContent = startRace
-    ? 'Aja vastapuolen checkpointin kautta ja ylitä maaliviiva oikeasta suunnasta.'
-    : 'Paina Restart aloittaaksesi ajanoton.';
+ ? 'Drive through the opposing side's checkpoint and cross the finish line from the right direction.' 
+ : 'Press Restart to start the timer.'; 
 }
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function isKeyDown(...codes) {
+function isKeyDown(... codes) { 
   return codes.some((code) => keys.has(code));
 }
 
@@ -140,8 +132,8 @@ function crossedVerticalSegment(line, direction, padding = 22) {
     return false;
   }
 
-  // Laske kohta, jossa auton edellisen ja nykyisen sijainnin välinen liike leikkaa viivan.
-  // Tämä tekee checkpointista ja maaliviivasta luotettavia myös kovassa vauhdissa.
+ Calculate the point where the movement between the previous and current positions of the car intersects the line. 
+ This makes the checkpoint and finish line reliable even at high speeds. 
   const travelProgress = (lineX - previousX) / (currentX - previousX);
   const yAtCrossing = car.previousY + (car.y - car.previousY) * travelProgress;
   const minY = Math.min(line.y1, line.y2) - padding;
@@ -161,12 +153,12 @@ function formatTime(milliseconds) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
 }
 
-// Auton fysiikka: kiihtyvyys, jarrutus/peruutus, nopeuteen suhteutettu kääntyminen ja kitka.
+Car physics: acceleration, braking/reversing, speed-proportional turning and friction. 
 function updateCar(deltaSeconds) {
-  const accelerating = isKeyDown('ArrowUp', 'KeyW') || touchControls.accelerate;
-  const braking = isKeyDown('ArrowDown', 'KeyS') || touchControls.brake;
-  const turningLeft = isKeyDown('ArrowLeft', 'KeyA') || touchControls.left;
-  const turningRight = isKeyDown('ArrowRight', 'KeyD') || touchControls.right;
+  const accelerating = isKeyDown('ArrowUp', 'KeyW');
+  const braking = isKeyDown('ArrowDown', 'KeyS');
+  const turningLeft = isKeyDown('ArrowLeft', 'KeyA');
+  const turningRight = isKeyDown('ArrowRight', 'KeyD');
   const onTrack = isCarOnTrack();
   const acceleration = onTrack ? 250 : 105;
   const brakeForce = onTrack ? 330 : 145;
@@ -203,7 +195,7 @@ function updateCar(deltaSeconds) {
   car.y = clamp(car.y, 20, HEIGHT - 20);
 }
 
-// Kierrosten tunnistus: checkpoint pitää kerätä ennen maaliviivaa, ja maaliviiva lasketaan vain oikeaan suuntaan.
+Lap detection: the checkpoint must be collected before the finish line, and the finish line is only lowered in the correct direction. 
 function updateRaceProgress(now) {
   const onCheckpoint = isInsideLineZone(checkpointLine, 16);
   const onFinish = isInsideLineZone(startLine, 16);
@@ -212,20 +204,20 @@ function updateRaceProgress(now) {
 
   if (crossedCheckpoint) {
     car.passedCheckpoint = true;
-    hud.status.textContent = 'Checkpoint hyväksytty! Palaa maaliviivalle viimeistelemään kierros.';
+ hud.status.textContent = 'Checkpoint approved! Return to the finish line to finish the lap.'; 
   }
 
   if (crossedFinish && car.passedCheckpoint) {
     completeLap(now);
   } else if (crossedFinish) {
-    hud.status.textContent = 'Kierros ei kelpaa vielä: aja ensin vastapuolen checkpointin kautta.';
+ hud.status.textContent = 'The round is not valid yet: drive through the other party's checkpoint first.'; 
   }
 
   car.wasOnCheckpoint = onCheckpoint;
   car.wasOnFinishLine = onFinish;
 }
 
-// Ajanotto: tallennetaan kierrosaika, paras kierros ja kokonaisaika maalissa.
+Timekeeping: record lap time, best lap and total time at the finish. 
 function completeLap(now) {
   const lapTime = now - timing.lapStart;
   timing.lapTimes.push(lapTime);
@@ -241,12 +233,12 @@ function completeLap(now) {
 
   timing.lap += 1;
   timing.lapStart = now;
-  hud.status.textContent = `Kierros ${timing.lap - 1} valmis. Hae seuraava checkpoint!`;
+ hud.status.textContent = 'Round ${timing.lap - 1} completed. Find the next checkpoint!'; 
 }
 
 function finishRace() {
   raceFinished = true;
-  hud.status.textContent = 'Maali! Katso tulokset ja aloita halutessasi uudelleen.';
+ hud.status.textContent = 'Goal! See the results and start again if you want.'; 
 
   resultsList.innerHTML = '';
   timing.lapTimes.forEach((lapTime, index) => addResultRow(`Kierros ${index + 1}`, formatTime(lapTime)));
@@ -349,7 +341,7 @@ function drawDirectionArrow(x, y, angle, label) {
   if (label) {
     ctx.fillStyle = '#cffafe';
     ctx.font = '800 14px system-ui, sans-serif';
-    ctx.fillText(label, x - 46, y + 34);
+ ctx.fillText(label, x-46, y+34); 
   }
 }
 
@@ -400,7 +392,7 @@ function roundRect(x, y, width, height, radius) {
   ctx.quadraticCurveTo(x, y, x + radius, y);
 }
 
-// Pelilooppi: lasketaan delta-aika, päivitetään fysiikka ja pelitila, piirretään uusi ruutu.
+Game loop: calculate the delta time, update the physics and game mode, draw a new screen. 
 function gameLoop(now) {
   const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.033);
   lastFrameTime = now;
@@ -427,54 +419,12 @@ window.addEventListener('keyup', (event) => {
   keys.delete(event.code);
 });
 
-
-function setTouchControl(control, isActive) {
-  if (!(control in touchControls)) {
-    return;
-  }
-
-  touchControls[control] = isActive;
-  touchButtons.forEach((button) => {
-    if (button.dataset.touchControl === control) {
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-pressed', String(isActive));
-    }
-  });
-}
-
-function resetTouchControls() {
-  Object.keys(touchControls).forEach((control) => setTouchControl(control, false));
-}
-
-function handleTouchControlStart(event) {
-  event.preventDefault();
-  const control = event.currentTarget.dataset.touchControl;
-  setTouchControl(control, true);
-}
-
-function handleTouchControlEnd(event) {
-  event.preventDefault();
-  const control = event.currentTarget.dataset.touchControl;
-  setTouchControl(control, false);
-}
-
 function restartGame() {
   createInitialState(true);
 }
 
 restartButton.addEventListener('click', restartGame);
 hudRestartButton.addEventListener('click', restartGame);
-
-touchButtons.forEach((button) => {
-  button.setAttribute('aria-pressed', 'false');
-  button.addEventListener('pointerdown', handleTouchControlStart);
-  button.addEventListener('pointerup', handleTouchControlEnd);
-  button.addEventListener('pointercancel', handleTouchControlEnd);
-  button.addEventListener('pointerleave', handleTouchControlEnd);
-  button.addEventListener('contextmenu', (event) => event.preventDefault());
-});
-
-window.addEventListener('blur', resetTouchControls);
 
 createInitialState();
 requestAnimationFrame(gameLoop);
