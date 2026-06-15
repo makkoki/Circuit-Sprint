@@ -2,7 +2,7 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const hud = {
- sheet: document.getElementById('sheetDisplay'), 
+  lap: document.getElementById('lapDisplay'),
   currentLap: document.getElementById('currentLapTime'),
   lastLap: document.getElementById('lastLapTime'),
   bestLap: document.getElementById('bestLapTime'),
@@ -81,15 +81,15 @@ function createInitialState(startRace = false) {
   resetTouchControls();
   resultsOverlay.classList.add('hidden');
   hud.status.textContent = startRace
- ? 'Drive through the opposing side's checkpoint and cross the finish line from the right direction.' 
- : 'Press Restart to start the timer.'; 
+    ? 'Aja vastapuolen checkpointin kautta ja ylitä maaliviiva oikeasta suunnasta.'
+    : 'Paina Restart aloittaaksesi ajanoton.';
 }
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function isKeyDown(... codes) { 
+function isKeyDown(...codes) {
   return codes.some((code) => keys.has(code));
 }
 
@@ -140,8 +140,8 @@ function crossedVerticalSegment(line, direction, padding = 22) {
     return false;
   }
 
- Calculate the point where the movement between the previous and current positions of the car intersects the line. 
- This makes the checkpoint and finish line reliable even at high speeds. 
+  // Laske kohta, jossa auton edellisen ja nykyisen sijainnin välinen liike leikkaa viivan.
+  // Tämä tekee checkpointista ja maaliviivasta luotettavia myös kovassa vauhdissa.
   const travelProgress = (lineX - previousX) / (currentX - previousX);
   const yAtCrossing = car.previousY + (car.y - car.previousY) * travelProgress;
   const minY = Math.min(line.y1, line.y2) - padding;
@@ -161,7 +161,7 @@ function formatTime(milliseconds) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
 }
 
-Car physics: acceleration, braking/reversing, speed-proportional turning and friction. 
+// Auton fysiikka: kiihtyvyys, jarrutus/peruutus, nopeuteen suhteutettu kääntyminen ja kitka.
 function updateCar(deltaSeconds) {
   const accelerating = isKeyDown('ArrowUp', 'KeyW') || touchControls.accelerate;
   const braking = isKeyDown('ArrowDown', 'KeyS') || touchControls.brake;
@@ -203,7 +203,7 @@ function updateCar(deltaSeconds) {
   car.y = clamp(car.y, 20, HEIGHT - 20);
 }
 
-Lap detection: the checkpoint must be collected before the finish line, and the finish line is only lowered in the correct direction. 
+// Kierrosten tunnistus: checkpoint pitää kerätä ennen maaliviivaa, ja maaliviiva lasketaan vain oikeaan suuntaan.
 function updateRaceProgress(now) {
   const onCheckpoint = isInsideLineZone(checkpointLine, 16);
   const onFinish = isInsideLineZone(startLine, 16);
@@ -212,20 +212,20 @@ function updateRaceProgress(now) {
 
   if (crossedCheckpoint) {
     car.passedCheckpoint = true;
- hud.status.textContent = 'Checkpoint approved! Return to the finish line to finish the lap.'; 
+    hud.status.textContent = 'Checkpoint hyväksytty! Palaa maaliviivalle viimeistelemään kierros.';
   }
 
   if (crossedFinish && car.passedCheckpoint) {
     completeLap(now);
   } else if (crossedFinish) {
- hud.status.textContent = 'The round is not valid yet: drive through the other party's checkpoint first.'; 
+    hud.status.textContent = 'Kierros ei kelpaa vielä: aja ensin vastapuolen checkpointin kautta.';
   }
 
   car.wasOnCheckpoint = onCheckpoint;
   car.wasOnFinishLine = onFinish;
 }
 
-Timekeeping: record lap time, best lap and total time at the finish. 
+// Ajanotto: tallennetaan kierrosaika, paras kierros ja kokonaisaika maalissa.
 function completeLap(now) {
   const lapTime = now - timing.lapStart;
   timing.lapTimes.push(lapTime);
@@ -241,12 +241,12 @@ function completeLap(now) {
 
   timing.lap += 1;
   timing.lapStart = now;
- hud.status.textContent = 'Round ${timing.lap - 1} completed. Find the next checkpoint!'; 
+  hud.status.textContent = `Kierros ${timing.lap - 1} valmis. Hae seuraava checkpoint!`;
 }
 
 function finishRace() {
   raceFinished = true;
- hud.status.textContent = 'Goal! See the results and start again if you want.'; 
+  hud.status.textContent = 'Maali! Katso tulokset ja aloita halutessasi uudelleen.';
 
   resultsList.innerHTML = '';
   timing.lapTimes.forEach((lapTime, index) => addResultRow(`Kierros ${index + 1}`, formatTime(lapTime)));
@@ -349,7 +349,7 @@ function drawDirectionArrow(x, y, angle, label) {
   if (label) {
     ctx.fillStyle = '#cffafe';
     ctx.font = '800 14px system-ui, sans-serif';
- ctx.fillText(label, x-46, y+34); 
+    ctx.fillText(label, x - 46, y + 34);
   }
 }
 
@@ -400,7 +400,7 @@ function roundRect(x, y, width, height, radius) {
   ctx.quadraticCurveTo(x, y, x + radius, y);
 }
 
-Game loop: calculate the delta time, update the physics and game mode, draw a new screen. 
+// Pelilooppi: lasketaan delta-aika, päivitetään fysiikka ja pelitila, piirretään uusi ruutu.
 function gameLoop(now) {
   const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.033);
   lastFrameTime = now;
@@ -429,7 +429,7 @@ window.addEventListener('keyup', (event) => {
 
 
 function setTouchControl(control, isActive) {
- if (!( control in touchControls)) { 
+  if (!(control in touchControls)) {
     return;
   }
 
