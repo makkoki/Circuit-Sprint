@@ -213,11 +213,35 @@ button:focus-visible {
   }
 
   .hud {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    top: 12px;
+    right: 12px;
+    left: auto;
+    grid-template-columns: minmax(104px, 132px);
+    gap: 6px;
+    width: min(34vw, 132px);
+  }
+
+  .hud-card,
+  .status,
+  .hud-restart {
+    border-radius: 12px;
+    padding: 7px 8px;
+  }
+
+  .hud-card span {
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+  }
+
+  .hud-card strong {
+    margin-top: 2px;
+    font-size: 0.82rem;
   }
 
   .status {
-    grid-column: 1 / -1;
+    grid-column: auto;
+    font-size: 0.72rem;
+    line-height: 1.2;
   }
 
   .touch-controls {
@@ -296,21 +320,31 @@ button:focus-visible {
   }
 
   .hud {
-    top: 10px;
-    left: 10px;
-    width: calc(100% - 20px);
-    gap: 6px;
+    top: 8px;
+    right: 8px;
+    left: auto;
+    width: min(36vw, 118px);
+    grid-template-columns: minmax(96px, 118px);
+    gap: 5px;
   }
 
   .hud-card,
   .status,
   .hud-restart {
-    border-radius: 12px;
-    padding: 7px 8px;
+    border-radius: 10px;
+    padding: 5px 6px;
+  }
+
+  .hud-card span {
+    font-size: 0.52rem;
   }
 
   .hud-card strong {
-    font-size: 0.88rem;
+    font-size: 0.74rem;
+  }
+
+  .status {
+    font-size: 0.64rem;
   }
 
   .touch-controls {
